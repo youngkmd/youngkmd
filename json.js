@@ -1,4 +1,4 @@
-<script>
+
     
 function myFunction() {
     // معلومات البوت ومعرف الدردشة
@@ -30,4 +30,4 @@ function myFunction() {
         }
     });
 }
-    </script>
+
