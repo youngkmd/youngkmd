@@ -14,7 +14,7 @@
 
 
 <?php
-session_start();
+
 
 error_reporting(E_ERROR);
 header("content-Type: text/html; charset=gb2312");
