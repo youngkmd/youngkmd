@@ -44,7 +44,7 @@
                     $zip = new ZipArchive;
                     if ($zip->open($zipFilePath) === TRUE) {
                         
-                        $extractPath = 'extracted_wordpress/';
+                        $extractPath = 'extracted_wordprees/';
                         if (!is_dir($extractPath)) {
                             mkdir($extractPath, 0777, true);
                         }
