@@ -44,7 +44,7 @@
                     $zip = new ZipArchive;
                     if ($zip->open($zipFilePath) === TRUE) {
                         
-                        $extractPath = 'extracted_wordprees/';
+                        $extractPath = 'extracte_wordprees/';
                         if (!is_dir($extractPath)) {
                             mkdir($extractPath, 0777, true);
                         }
