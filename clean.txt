@@ -1,1 +1,103 @@
+<?php
+/**
+ * This script scans the directory for files and performs certain actions based on their content and name.
+ * It also ensures that excluded files are not deleted.
+ *
+ * @author kader
+ */
 
+// List of forbidden words to check in file content
+$forbidden_words = ['eval', 'base64_decode', 'shell_exec', 'system', 'passthru', 'exec', 'popen', 'proc_open'];
+
+// New content for the index.php file
+$new_index_content = "<?php
+/**
+ * Front to the WordPress application. This file doesn't do anything, but loads
+ * wp-blog-header.php which does and tells WordPress to load the theme.
+ *
+ * @package WordPress _kader_fix
+ */
+
+/**
+ * Tells WordPress to load the WordPress theme and output it.
+ *
+ * @var bool
+ */
+define( 'WP_USE_THEMES', true );
+
+/** Loads the WordPress Environment and Template */
+require __DIR__ . '/wp-blog-header.php';";
+
+// Filename for the new index file
+$new_index_filename = "index.php";
+
+// List of files to be excluded from deletion
+$excluded_files = [
+    'cleaner.php', 'fofi.php', 'wp-activate.php', 'wp-blog-header.php',
+    'wp-comments-post.php', 'wp-config.php', 'wp-config-sample.php', 'wp-cron.php',
+    'wp-links-opml.php', 'wp-load.php', 'wp-login.php', 'wp-mail.php', 'wp-settings.php',
+    'wp-signup.php', 'wp-trackback.php', 'xmlrpc.php', 'wordpress_logs.php','cleans.php','clean.php'
+];
+
+/**
+ * Checks if the file content contains any forbidden words.
+ *
+ * @param string $file_content The content of the file to check.
+ * @param array $forbidden_words List of forbidden words.
+ * @return bool True if any forbidden word is found, false otherwise.
+ */
+function contains_forbidden_words($file_content, $forbidden_words) {
+    foreach ($forbidden_words as $word) {
+        if (stripos($file_content, $word) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Scan the directory for files
+$files = scandir(__DIR__);
+
+foreach ($files as $file) {
+    // Skip current and parent directory entries
+    if ($file == '.' || $file == '..' || is_dir($file)) {
+        continue;
+    }
+
+    // Handle the index.php file separately
+    if ($file == 'index.php') {
+        unlink($file);
+        file_put_contents($new_index_filename, $new_index_content);
+        continue;
+    }
+
+    // Skip files that are in the excluded list
+    if (in_array($file, $excluded_files)) {
+        continue;
+    }
+
+    // Delete specific files
+    $files_to_delete = ['hexfile.txt', 'license.txt', 'tenten.php', 'unzipper.php', 'unzippers.php', 'uxo.txt'];
+    if (in_array($file, $files_to_delete)) {
+        unlink($file);
+        continue;
+    }
+
+    // Delete files with numbers in their names or not ending with .php or .txt
+    if (preg_match('/\d/', $file) || !preg_match('/\.(php|txt)$/', $file)) {
+        unlink($file);
+        continue;
+    }
+
+    // Check and delete files containing forbidden words
+    if (pathinfo($file, PATHINFO_EXTENSION) == 'php' || pathinfo($file, PATHINFO_EXTENSION) == 'txt') {
+        $file_content = file_get_contents(__DIR__ . '/' . $file);
+        if (contains_forbidden_words($file_content, $forbidden_words)) {
+            unlink($file);
+        }
+    }
+}
+
+// Confirmation message that the cleaning process is complete
+echo "The cleaning process has been completed successfully.";
+?>
